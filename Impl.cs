@@ -129,7 +129,8 @@ namespace proj1
         {
             foreach (Player p in players)
             {
-                //handle improperly registered players
+                //handle improperly registered players by adding the executing
+                //Board object as the assignedBoard
                 if (p.assignedBoard == null) { p.assignedBoard = this; }
                 if ((p.assignedBoard != null) && (p.hand.Count == 0))
                     InitDeal(p);
@@ -172,9 +173,8 @@ namespace proj1
             {
                 foreach (Player p in players)
                 {
+                    //remove hanging state otherwise we will double deal by accident
                     hittingPlayers.Clear();
-                //remove hanging state otherwise we will double deal by accident
-                prompt:
                     Console.WriteLine($"shown := {{{p.shown()}}} and {p.hand.Count - 1} not shown");
                     Console.WriteLine($"score:= {p.score()}");
                     Console.WriteLine("Do you hit or stand?");
@@ -199,7 +199,7 @@ namespace proj1
                         //why does this need a break its a literal program abort??
                         default:
                             Console.WriteLine("command not understood.");
-                            goto prompt;
+                            goto switchS;
                     }
                     Console.WriteLine("Dealer Plays");
                     Deal();
