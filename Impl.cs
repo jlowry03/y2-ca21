@@ -21,29 +21,27 @@ namespace proj1
     {
         public const int SuitLength = 13;
         public static bool CloseTo21 = false;
-        public static CardType getAce()
+        public static CardType Ace
         {
-            if (CloseTo21)
+            get
             {
-                return Ace1;
+                if (CloseTo21) { return Ace1; } else { return Ace11; };
             }
-            else { return Ace11; }
         }
-        public static CardType Ace = getAce();
-        public static CardType Ace11 = new CardType("Ace", 11);
-        public static CardType Ace1 = new CardType("Ace", 1);
-        public static CardType Two = new CardType("Two", 2);
-        public static CardType Three = new CardType("Three", 3);
-        public static CardType Four = new CardType("Four", 4);
-        public static CardType Five = new CardType("Five", 5);
-        public static CardType Six = new CardType("Six", 6);
-        public static CardType Seven = new CardType("Seven", 7);
-        public static CardType Eight = new CardType("Eight", 8);
-        public static CardType Nine = new CardType("Nine", 9);
-        public static CardType Ten = new CardType("Ten", 10);
-        public static CardType King = new CardType("King", 10);
-        public static CardType Queen = new CardType("Queen", 10);
-        public static CardType Jack = new CardType("Jack", 10);
+        public static readonly CardType Ace11 = new CardType("Ace", 11);
+        public static readonly CardType Ace1 = new CardType("Ace", 1);
+        public static readonly CardType Two = new CardType("Two", 2);
+        public static readonly CardType Three = new CardType("Three", 3);
+        public static readonly CardType Four = new CardType("Four", 4);
+        public static readonly CardType Five = new CardType("Five", 5);
+        public static readonly CardType Six = new CardType("Six", 6);
+        public static readonly CardType Seven = new CardType("Seven", 7);
+        public static readonly CardType Eight = new CardType("Eight", 8);
+        public static readonly CardType Nine = new CardType("Nine", 9);
+        public static readonly CardType Ten = new CardType("Ten", 10);
+        public static readonly CardType King = new CardType("King", 10);
+        public static readonly CardType Queen = new CardType("Queen", 10);
+        public static readonly CardType Jack = new CardType("Jack", 10);
         public CardType[] Cards = new CardType[SuitLength]
         {
             Ace,
@@ -72,6 +70,7 @@ namespace proj1
         //value of a card
         public int CompareTo(Card card)
         {
+            if (card == null) { return 0; }
             return (CardVal.val).CompareTo(card.CardVal.val);
         }
         public override string ToString() =>
@@ -80,15 +79,21 @@ namespace proj1
     class Player
     {
         public List<Card> hand = new List<Card>();
-        public Card shown = hand[0];
+        public Board? assignedBoard;
+        public Card shown() => hand[0];
         public string? name;
-        public int score()
-        {
-            return hand.Aggregate(0, (acc, x) => acc + x.CardVal.val);
-        }
+        public int score() => hand.Aggregate(0, (acc, x) => acc + x.CardVal.val);
         public Player() { }
-        void Hit() { }
-        void Stand() { }
+        //we can get away with this as after every loop over the players we merely
+        //execute Deal then
+        public void Hit()
+        {
+            (assignedBoard.hittingPlayers).Add(this);
+        }
+        public void Stand()
+        {
+            (assignedBoard.hittingPlayers).Remove(this);
+        }
     }
     class Board
     {
@@ -107,7 +112,11 @@ namespace proj1
                 c.CardVal = _Cards[(i % CardValue.SuitLength)];
                 //set the card to be the modulo of the index and the number within
                 //a suit
-                if (((i % CardValue.SuitLength) == 0) && (i > 1)) { _suitI++; }
+                if ((i > 1) &&
+                    ((i % CardValue.SuitLength) == 0))
+                {
+                    _suitI++;
+                }
                 //if it is at the start of the suit and greater than 1 then go
                 //to the next suit for the index
                 c.CardSuit = _suit[_suitI];
@@ -116,30 +125,85 @@ namespace proj1
         }
         public List<Player> players = new List<Player>();
         public List<Player> hittingPlayers = new List<Player>();
-        public void InitDeal()
+        public void InitDealAll()
         {
-            var rnd = new Random();
             foreach (Player p in players)
             {
-                int num;
-                num = rnd.Next(0, Deck.Count);
-                p.hand.Add(Deck[num]);
-                Deck.RemoveAt(num);
+                //handle improperly registered players
+                if (p.assignedBoard == null) { p.assignedBoard = this; }
+                if ((p.assignedBoard != null) && (p.hand.Count == 0))
+                    InitDeal(p);
+            }
+        }
+        public void InitDeal(Player p)
+        {
+            var rnd = new Random();
+            int num;
+            num = rnd.Next(0, Deck.Count);
+            p.hand.Add(Deck[num]);
+            Deck.RemoveAt(num);
 
+            num = rnd.Next(0, Deck.Count);
+            p.hand.Add(Deck[num]);
+            Deck.RemoveAt(num);
+        }
+        public void Deal()
+        {
+            var rnd = new Random();
+            foreach (Player p in hittingPlayers)
+            {
+                int num;
                 num = rnd.Next(0, Deck.Count);
                 p.hand.Add(Deck[num]);
                 Deck.RemoveAt(num);
             }
         }
-        public void Deal()
+        public void Register(Player p)
         {
-            var rnd = new Random();
-            foreach (Player p in players)
+            players.Add(p);
+            p.assignedBoard = this;
+            InitDeal(p);
+        }
+        public void EventLoop()
+        {
+            InitDealAll(); // catch all players who are added directly to respective lists
+            bool gameActive = true;
+            while (gameActive)
             {
-                int num;
-                num = rnd.Next(0, Deck.Count);
-                p.hand.Add(Deck[num]);
-                Deck.RemoveAt(num);
+                foreach (Player p in players)
+                {
+                    hittingPlayers.Clear();
+                //remove hanging state otherwise we will double deal by accident
+                prompt:
+                    Console.WriteLine($"shown := {{{p.shown()}}} and {p.hand.Count - 1} not shown");
+                    Console.WriteLine($"score:= {p.score()}");
+                    Console.WriteLine("Do you hit or stand?");
+                switchS:
+                    Console.Write($"{p.name}> ");
+                    switch (Console.ReadLine().Trim().ToLower().Substring(0, 1))
+                    {
+                        case "h": p.Hit(); break;
+                        case "s": p.Stand(); break;
+                        case "p":
+                            Console.WriteLine("hand:={");
+                            foreach (Card c in p.hand)
+                            {
+                                Console.WriteLine($"  {c},");
+                            }
+                            Console.WriteLine("}");
+                            goto switchS;
+                        case "q":
+                        case "e":
+                            Environment.Exit(0);
+                            break;
+                        //why does this need a break its a literal program abort??
+                        default:
+                            Console.WriteLine("command not understood.");
+                            goto prompt;
+                    }
+                    Console.WriteLine("Dealer Plays");
+                    Deal();
+                }
             }
         }
     }

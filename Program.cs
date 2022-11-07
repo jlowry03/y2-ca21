@@ -5,16 +5,14 @@ namespace proj1
     {
         static void Main(string[] args)
         {
-            Player James = new Player()
-            {
-                //initialise with a dead-mans hand
-                name = "James",
-            };
+            Player James = new Player(){ name = "James", };
+            Player Joe = new Player()  { name = "Joe", };
 
             Board currBoard = new Board();
-            currBoard.players.Add(James);
-
+            currBoard.Register(James);
+            currBoard.Register(Joe);
 #if DBG
+            ///initialise with a dead-mans hand
             //James.hand.Add((new Card()
             //{
             //    CardSuit = Suit.Clubs,
@@ -49,14 +47,18 @@ namespace proj1
                 Console.WriteLine($"  {x},");
             }
             Console.WriteLine("\b}");
-            currBoard.InitDeal();
-            Console.WriteLine("hand := {");
-            foreach (Card x in James.hand)
-            {
-                Console.WriteLine($"  {x},");
+            //Console.WriteLine("hand := {");
+            //foreach (Card x in James.hand)
+            //{
+            //    Console.WriteLine($"  {x},");
+            //}
+            //Console.WriteLine("\b}");
+            while(Console.ReadKey().Key != ConsoleKey.Enter){
+                Thread.Sleep(1);
             }
-            Console.WriteLine("\b}");
 #endif
+            Console.Clear();
+            currBoard.EventLoop();
         }
     }
 }
