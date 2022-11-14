@@ -12,7 +12,7 @@ namespace proj1
             currBoard.Register(James);
             currBoard.Register(Joe);
 #if DBG
-            ///initialise with a dead-mans hand
+            ////initialise with a dead-mans hand
             //James.hand.Add((new Card()
             //{
             //    CardSuit = Suit.Clubs,
@@ -42,8 +42,7 @@ namespace proj1
             //}));
             //Console.WriteLine(James.score());
             Console.WriteLine("deck := {");
-            foreach (Card x in currBoard.Deck)
-            {
+            foreach (Card x in currBoard.Deck){
                 Console.WriteLine($"  {x},");
             }
             Console.WriteLine("\b}");

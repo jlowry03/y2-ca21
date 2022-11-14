@@ -6,5 +6,13 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
+  <ItemGroup>
+    <Using Include="System" />
+    <Using Include="System.Collections.Generic" />
+    <Using Include="System.Diagnostics"/>
+    <Using Include="System.Linq" />
+    <Using Include="System.Text.RegularExpressions" />
+    <Using Include="System.IO" />
+  </ItemGroup>
 
 </Project>
