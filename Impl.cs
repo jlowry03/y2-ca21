@@ -25,7 +25,7 @@ namespace proj1
         {
             get
             {
-                if (CloseTo21) { return Ace1; } else { return Ace11; };
+                if (CloseTo21) { return CardValue.Ace1; } else { return CardValue.Ace11; };
             }
         }
         public static readonly CardType Ace11 = new CardType("Ace", 11);
@@ -63,7 +63,6 @@ namespace proj1
     class Card : IComparable<Card>
     {
         public Card() { }
-        public bool CloseTo21 = false;
         public Suit CardSuit;
         public CardType CardVal;
         //NOTE: { get; } only, we do not want users/devs to be setting the
@@ -78,6 +77,7 @@ namespace proj1
     }
     class Player
     {
+        public List<int> aces = new List<int>();
         public List<Card> hand = new List<Card>();
         public Board? assignedBoard;
         public Card shown() => hand[0];
@@ -86,6 +86,34 @@ namespace proj1
         public Player() { }
         //we can get away with this as after every loop over the players we merely
         //execute Deal then
+        public void ReEvaluate()
+        {
+            //educated geuss
+            if ((21 - score()) < 5)
+            {
+                for (int i = 0; i < hand.Count; i++)
+                {
+                    if (hand[i].CardVal.name == "Ace")
+                        aces.Add(i);
+                    //we add the cards index to aces rather than the actual card
+                    //as list store by copying and that means that if you mutate
+                    //the list item it doesnt mutate the original, hence we went
+                    //with storing the index
+                }
+                Console.WriteLine("aces := {");
+                foreach (int i in aces)
+                {
+                    Console.Write($"({i},{hand[i]});,");
+                }
+                Console.WriteLine("\n};");
+                //only re-evaluate the first ace
+                if (aces.Count > 0)
+                {
+                    hand[(aces[0])].CardVal = new CardValue() { CloseTo21 = true, }.Ace;
+                    Debug.Assert(hand[aces[0]].CardVal.val == 1, "Ace is not 1");
+                }
+            }
+        }
         public void Hit()
         {
             (assignedBoard.hittingPlayers).Add(this);
@@ -105,7 +133,7 @@ namespace proj1
                 Suit.Hearts, Suit.Diamonds, Suit.Clubs, Suit.Spades
             };
             int _suitI = 0;
-            CardType[] _Cards = new CardValue().Cards;
+            CardType[] _Cards = (new CardValue().Cards);
             for (int i = 0; i < (CardValue.SuitLength * 4); i++)
             {
                 Card c = new Card();
@@ -141,21 +169,24 @@ namespace proj1
             var rnd = new Random();
             int num;
             num = rnd.Next(0, Deck.Count);
-            p.hand.Add(Deck[num]);
+            Card c = Deck[num];
+            p.hand.Add(c);
             Deck.RemoveAt(num);
 
             num = rnd.Next(0, Deck.Count);
-            p.hand.Add(Deck[num]);
+            c = Deck[num];
+            p.hand.Add(c);
             Deck.RemoveAt(num);
         }
-        public void Deal()
+        public void MidGameDeal()
         {
             var rnd = new Random();
             foreach (Player p in hittingPlayers)
             {
                 int num;
                 num = rnd.Next(0, Deck.Count);
-                p.hand.Add(Deck[num]);
+                Card c = Deck[num];
+                p.hand.Add(c);
                 Deck.RemoveAt(num);
             }
         }
@@ -202,9 +233,5 @@ namespace proj1
                             goto switchS;
                     }
                     Console.WriteLine("Dealer Plays");
-                    Deal();
-                }
-            }
-        }
-    }
-}
+                    MidGameDeal();
+}}}}}
